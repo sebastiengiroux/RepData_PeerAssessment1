@@ -10,26 +10,28 @@ output:
 
 Let's start by unzipping and loading the data.
 
-```{r}
+
+```r
 unzip("activity.zip")
 data <- read.csv("activity.csv")
 ```
 
 Let's now process/transform the data into a format suitable for our analysis. We'll use a more suitable data format for the date.
 
-```{r, results='hide', message=FALSE}
+
+```r
 library(dplyr)
 library(lubridate)
 options(scipen=6);
 
 data <- data %>% mutate(date = ymd(date))
-
 ```
 
 ## What is mean total number of steps taken per day?
 Let's make a histogram of the total number of steps taken each day.  We'll ignore the missing values from the dataset.  We'll also calculate the **mean** and **median** total number of steps taken per day and add them to the plot
 
-```{r, message=FALSE, warning=FALSE}
+
+```r
 library(ggplot2)
 
 dailyStats <- data %>% group_by(date) %>% summarise(steps = sum(steps, na.rm = TRUE))
@@ -43,27 +45,29 @@ g <- ggplot(dailyStats, aes(x=date, steps)) +
   geom_hline(aes(yintercept = mean, linetype="Mean"), col = "blue") 
 
 print(g)
-
 ```
 
-So, the mean is `r round(mean)` steps, and the median is `r median` steps.
+![](PA1_template_files/figure-html/unnamed-chunk-3-1.png)<!-- -->
+
+So, the mean is 9354 steps, and the median is 10395 steps.
 
 
 ## What is the average daily activity pattern?
 
 Let's make a time series plot of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all days (y-axis).  We'll also find which 5-minute interval, on average across all the days in the dataset, contains the maximum number of steps and add it to the plot.
 
-```{r, warning=FALSE}
 
+```r
 hourlyStats <- data %>% group_by(interval) %>% summarise(steps = mean(steps, na.rm = TRUE))
 maxInterval <- as.numeric(hourlyStats[which.max(hourlyStats$steps),"interval"])
 
 with(hourlyStats, plot(x = interval, y = steps, type="l"))
 abline(v=maxInterval, col = "blue")
-
 ```
 
-So, the 5-minute interval that contains the maximum number of steps is `r maxInterval`
+![](PA1_template_files/figure-html/unnamed-chunk-4-1.png)<!-- -->
+
+So, the 5-minute interval that contains the maximum number of steps is 835
 
 
 ## Imputing missing values
@@ -73,19 +77,18 @@ bias into some calculations or summaries of the data.
 
 So, we'll calculate and report the total number of missing values in the dataset.
 
-```{r}
 
+```r
 numberMissing <- sum(is.na(data$steps))
 percentMissing <- mean(is.na(data$steps))
-
 ```
 
-There are `r numberMissing` elements missing in the dataset, which represent roughly `r round(percentMissing * 100,2)`% of the dataset.
+There are 2304 elements missing in the dataset, which represent roughly 13.11% of the dataset.
 
 We'll create a new dataset and use the mean value across all days for missing 5-minute intervals.
 
-```{r, warning=FALSE}
 
+```r
 noNaData <- data %>% 
   group_by(interval) %>%
   mutate(steps = ifelse(is.na(steps), mean(steps, na.rm = TRUE), steps))
@@ -101,15 +104,16 @@ g <- ggplot(dailyStatsNoNa, aes(x=date, steps)) +
   geom_hline(aes(yintercept = meanNoNa, linetype="Mean"), col = "blue") 
 
 print(g)
-
 ```
 
-So, the mean without NA is `r round(meanNoNa,0)` steps, and the median without NA is `r round(medianNoNa,0)` steps.
+![](PA1_template_files/figure-html/unnamed-chunk-6-1.png)<!-- -->
+
+So, the mean without NA is 10766 steps, and the median without NA is 10766 steps.
 
 |               | With NA             | Without NA              |
 | ------------- |:-------------------:| -----------------------:|
-| mean          | `r round(mean,0)`   | `r round(meanNoNa,0)`   |
-| median        | `r round(median,0)` | `r round(medianNoNa,0)` |
+| mean          | 9354   | 10766   |
+| median        | 10395 | 10766 |
 
 We see that these values differ from the first part of the assignment.  We also see that if we set the missing value equal to the mean of the corresponding 5-minute interval, the resulting mean & median are roughly equal.
 
@@ -117,8 +121,8 @@ We see that these values differ from the first part of the assignment.  We also 
 
 We'll analyse the data without NA.  We'll start by adding a column that specifies whether the day was a weekend or not.  We'll then calculate the mean for the week days and weekends and we'll plot everything.
 
-```{r, warning=FALSE}
 
+```r
 weekdayData <- noNaData %>%
   mutate(weekday = ifelse(wday(date) %in% c(1,7), "weekend", "week")) %>%
   group_by(date, weekday) %>% 
@@ -132,7 +136,8 @@ g <- ggplot(weekdayData, aes(x=date, y=steps)) +
   geom_line()
 
 print(g)
-
 ```
 
-The mean on weekdays (`r round(weekMean,2)`) is smaller than on weekends (`r round(weekendMean,2)`)
+![](PA1_template_files/figure-html/unnamed-chunk-7-1.png)<!-- -->
+
+The mean on weekdays (10255.85) is smaller than on weekends (12201.52)
